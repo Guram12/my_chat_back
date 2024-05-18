@@ -12,12 +12,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
+        print(f"WebSocket connection accepted for room: {self.room_name}")
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
+        print(f"WebSocket connection closed for room: {self.room_name}")
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -30,6 +32,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': message
             }
         )
+        print(f"Received message: {message} in room: {self.room_name}")
 
     async def chat_message(self, event):
         message = event['message']
@@ -37,3 +40,4 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': message
         }))
+        print(f"Sent message: {message} in room: {self.room_name}")
