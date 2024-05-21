@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserList, UserDetail, MessageList, RoomList, RoomDetail, RoomMessages, logout, CurrentUserDetail
+from .views import UserList, UserDetail, MessageList, RoomList, RoomDetail, RoomMessagesView, logout, CurrentUserDetail
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
@@ -9,7 +9,8 @@ urlpatterns = [
     path('messages/', MessageList.as_view(), name='message-list'),
     path('rooms/', RoomList.as_view(), name='room-list'),
     path('rooms/<int:pk>/', RoomDetail.as_view(), name='room-detail'),
-    path('rooms/<int:room_id>/messages/', RoomMessages.as_view(), name='room-messages'),
+    # path('rooms/<int:room_id>/messages/', RoomMessages.as_view(), name='room-messages'),
     path('login/', obtain_auth_token, name='login'),
     path('logout/', logout, name='logout'),
+    path('rooms/<str:room_name>/messages/', RoomMessagesView.as_view(), name='room-messages'),
 ]

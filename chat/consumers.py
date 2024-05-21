@@ -3,7 +3,7 @@ import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from django.contrib.auth.models import User
-from .models import Message
+from .models import Message, Room
 
 logger = logging.getLogger(__name__)
 
@@ -42,28 +42,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender = await sync_to_async(User.objects.get)(username=sender_username)
             
             if recipient_username == self.room_name:
-                # If recipient is the room, we broadcast to the room
+                room, created = await sync_to_async(Room.objects.get_or_create)(name=self.room_name)
+                message_instance = await sync_to_async(Message.objects.create)(sender=sender, room=room, content=message)
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
                         'type': 'chat_message',
-                        'message': message,
-                        'sender': sender.username,
-                        'recipient': recipient_username
+                        'message': message_instance.content,
+                        'sender_username': sender.username,
                     }
                 )
             else:
-                # Otherwise, try to find the recipient user
                 recipient = await sync_to_async(User.objects.get)(username=recipient_username)
                 message_instance = await sync_to_async(Message.objects.create)(sender=sender, recipient=recipient, content=message)
-
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
                         'type': 'chat_message',
-                        'message': message,
-                        'sender': sender.username,
-                        'recipient': recipient.username
+                        'message': message_instance.content,
+                        'sender_username': sender.username,
                     }
                 )
         except User.DoesNotExist as e:
@@ -80,11 +77,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         message = event['message']
-        sender = event['sender']
-        recipient = event['recipient']
+        sender_username = event['sender_username']
 
         await self.send(text_data=json.dumps({
             'message': message,
-            'sender': sender,
-            'recipient': recipient
+            'sender_username': sender_username
         }))
