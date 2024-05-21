@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Message, Room
 from .serializers import UserSerializer, MessageSerializer, RoomSerializer
+from rest_framework.permissions import IsAuthenticated
+
 
 class UserList(generics.ListCreateAPIView):
     queryset = User.objects.all()
@@ -13,6 +15,15 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+
+class CurrentUserDetail(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+    
+    
 class MessageList(generics.ListCreateAPIView):
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
