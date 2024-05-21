@@ -4,16 +4,28 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from django.contrib.auth.models import User
 from .models import Message, Room
+from channels.db import database_sync_to_async
+from rest_framework.authtoken.models import Token
 
 logger = logging.getLogger(__name__)
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.user = self.scope['user']
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
 
-        if self.user.is_anonymous:
+        # Extract token from the query string
+        query_string = self.scope['query_string'].decode()
+        token_key = query_string.split('=')[1] if '=' in query_string else None
+
+        if token_key:
+            try:
+                user = await database_sync_to_async(Token.objects.get)(key=token_key)
+                self.scope['user'] = user.user
+            except Token.DoesNotExist:
+                await self.close()
+
+        if self.scope['user'].is_anonymous:
             await self.close()
         else:
             await self.channel_layer.group_add(
@@ -24,12 +36,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             logger.info(f"WebSocket connection accepted for room: {self.room_name}")
 
     async def disconnect(self, close_code):
-        logger.info(f"Disconnected with close code: {close_code}")
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
-
+            
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
