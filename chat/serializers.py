@@ -7,13 +7,22 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email']
 
+# class MessageSerializer(serializers.ModelSerializer):
+#     sender = UserSerializer(read_only=True)
+#     recipient = UserSerializer(read_only=True)
+
+#     class Meta:
+#         model = Message
+#         fields = ['id', 'sender', 'recipient', 'content', 'timestamp']
+
+
+
 class MessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
-    recipient = UserSerializer(read_only=True)
+    sender_username = serializers.CharField(source='sender.username', read_only=True)
 
     class Meta:
         model = Message
-        fields = ['id', 'sender', 'recipient', 'content', 'timestamp']
+        fields = ['sender_username', 'content', 'timestamp']
 
 class RoomSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)

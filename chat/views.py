@@ -6,6 +6,12 @@ from .models import Message, Room
 from .serializers import UserSerializer, MessageSerializer, RoomSerializer
 from rest_framework.permissions import IsAuthenticated
 
+from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
 
 class UserList(generics.ListCreateAPIView):
     queryset = User.objects.all()
@@ -49,23 +55,18 @@ class RoomDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RoomSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class RoomMessages(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+class RoomMessagesView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def get(self, request, room_id):
-        room = Room.objects.get(id=room_id)
-        if request.user in room.participants.all():
-            messages = Message.objects.filter(recipient__rooms=room)
+    def get(self, request, room_name):
+        try:
+            room = Room.objects.get(name=room_name)
+            messages = Message.objects.filter(room=room).order_by('timestamp')
             serializer = MessageSerializer(messages, many=True)
             return Response(serializer.data)
-        return Response({"error": "You are not a participant of this room."}, status=403)
+        except Room.DoesNotExist:
+            return Response({"error": "Room not found"}, status=404)
 
-
-from rest_framework.authtoken.views import obtain_auth_token
-from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
 
 
 
