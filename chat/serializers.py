@@ -1,21 +1,21 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import Message, Room
+from .models import CustomUser, Message, Room
 
-class UserSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ['id', 'username', 'email']
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'bio', 'location']
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_username = serializers.CharField(source='sender.username', read_only=True)
+    recipient_username = serializers.CharField(source='recipient.username', read_only=True)
 
     class Meta:
         model = Message
-        fields = ['sender_username', 'content', 'timestamp']
+        fields = ['id', 'sender_username', 'recipient_username', 'content', 'timestamp']
 
 class RoomSerializer(serializers.ModelSerializer):
-    participants = UserSerializer(many=True, read_only=True)
+    participants = CustomUserSerializer(many=True, read_only=True)
 
     class Meta:
         model = Room

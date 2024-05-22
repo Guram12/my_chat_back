@@ -60,6 +60,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'my_chat.urls'
 
+AUTH_USER_MODEL = 'chat.CustomUser'
+
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -166,4 +169,3 @@ REST_FRAMEWORK = {
 }
 
 
-# AUTH_USER_MODEL = 'chat.CustomUser'
