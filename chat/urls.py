@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserList, UserDetail, MessageList, RoomList, RoomDetail, RoomMessagesView, logout, CurrentUserDetail, UserToUserMessages
+from .views import UserList, UserDetail, MessageList, RoomList, RoomDetail, RoomMessagesView, logout, CurrentUserDetail, UserToUserMessages 
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
