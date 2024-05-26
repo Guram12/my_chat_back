@@ -4,7 +4,7 @@ from .models import CustomUser, Message, Room
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'bio', 'location']
+        fields = ['id', 'username', 'email', 'bio', 'location', 'is_online' , 'last_seen']
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_username = serializers.CharField(source='sender.username', read_only=True)

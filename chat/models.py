@@ -4,6 +4,9 @@ from django.db import models
 class CustomUser(AbstractUser):
     bio = models.TextField(null=True, blank=True)
     location = models.CharField(max_length=100, null=True, blank=True)
+    is_online = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(null=True, blank=True)
+
     
     def __str__(self):
         return self.username
