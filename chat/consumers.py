@@ -4,6 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from .models import CustomUser, Message
 from rest_framework.authtoken.models import Token
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.sender_username = self.scope['url_route']['kwargs']['sender']
         self.recipient_username = self.scope['url_route']['kwargs']['recipient']
 
-        # Create a unique group name for the pair of users
         users = sorted([self.sender_username, self.recipient_username])
         self.room_group_name = f'chat_{users[0]}_{users[1]}'
         logger.info(f"Connecting to WebSocket group: {self.room_group_name}")
@@ -24,6 +24,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             user = await self.get_user_from_token(token_key)
             if user and user.username == self.sender_username:
                 self.scope['user'] = user
+                await self.set_user_online_status(user, True)
             else:
                 await self.close()
 
@@ -45,8 +46,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Token.DoesNotExist:
             return None
 
+    @sync_to_async
+    def set_user_online_status(self, user, status):
+        user.is_online = status
+        user.last_seen = datetime.datetime.now()
+        user.save()
+
     async def disconnect(self, close_code):
         logger.info(f"Disconnected with close code: {close_code}")
+        await self.set_user_online_status(self.scope['user'], False)
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name

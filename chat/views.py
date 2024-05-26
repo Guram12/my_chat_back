@@ -4,19 +4,22 @@ from rest_framework.views import APIView
 from .models import CustomUser, Message, Room
 from .serializers import CustomUserSerializer, MessageSerializer, RoomSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework import status
 from django.db.models import Q
+import datetime
 
 class UserList(generics.ListCreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 class CurrentUserDetail(APIView):
     permission_classes = [IsAuthenticated]
@@ -89,5 +92,23 @@ class RoomMessagesView(APIView):
 
 @api_view(['POST'])
 def logout(request):
+    request.user.is_online = False
+    request.user.save()
     request.user.auth_token.delete()
+    return Response(status=status.HTTP_200_OK)
+
+class CustomAuthToken(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        token = Token.objects.get(key=response.data['token'])
+        user = token.user
+        user.is_online = True
+        user.last_seen = datetime.datetime.now()
+        user.save()
+        return Response({'token': token.key, 'user_id': user.pk, 'email': user.email})
+
+@api_view(['POST'])
+def heartbeat(request):
+    request.user.last_seen = datetime.datetime.now()
+    request.user.save()
     return Response(status=status.HTTP_200_OK)
